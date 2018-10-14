@@ -4,6 +4,7 @@ import Weather from './Weather'
 import City from './City'
 import Forecast from './Forecast'
 
+
 class App extends Component {
   constructor(props) {
     super(props)
@@ -13,6 +14,8 @@ class App extends Component {
       currentWeather: [],
       weatherForecast: [],
       searchCity: '',
+      cityTimezone: '',
+      timeZoneId: '',
       searchValue: '',
       gotWeather: false,
     }
@@ -86,12 +89,27 @@ class App extends Component {
     })
   }
 
+  getTimezone(latlng) {
+    fetch(`https://maps.googleapis.com/maps/api/timezone/json?location=${latlng.lat},${latlng.lng}&timestamp=1000000&key=${process.env.REACT_APP_GOOGLE_KEY}`)
+    .then(response => response.json())
+    .then(data => {
+      console.log(data)
+      this.setState({
+        timeZoneId: data.timeZoneId
+      })
+      return data.rawOffset
+    })
+  }
+
   handleSearchButton() {
     this.getLatLng(this.state.searchValue)
       .then(result => this.getCurrentWeather(result))
 
     this.getLatLng(this.state.searchValue)
     .then(result => this.getForecastWeather(result))
+
+    this.getLatLng(this.state.searchValue)
+    .then(result => this.getTimezone(result))
   }
 
   handleSearchBar(e) {
@@ -103,8 +121,8 @@ class App extends Component {
   render() {
     return (
       <div className="App">
-        <h1>Weather App</h1>
         <input
+          className="search-box"
           id="search"
           placeholder="City..."
           type="text"
@@ -124,9 +142,11 @@ class App extends Component {
               return (
                 <Forecast
                   time={forecast.time}
+                  key={forecast.time}
                   temp={forecast.temp}
                   weatherDetail={forecast.weatherDetail}
                   weatherIcon={forecast.weatherIcon}
+                  timeZoneId={this.state.timeZoneId}
                 />
               )
             })}
